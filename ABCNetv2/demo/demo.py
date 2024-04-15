@@ -135,7 +135,7 @@ if __name__ == "__main__":
                       x1, y1, x2, y2 = box
                       logger.info(f'{x1}, {y1}, {x2}, {y2}')
                       cropped_region = img[int(y1):int(y2), int(x1):int(x2)]
-                      cropped_basename = os.path.splitext(os.path.basename(path))[0] + f’_cropped_{idx}.jpg’
+                      cropped_basename = os.path.splitext(os.path.basename(path))[0] + f'_cropped_{idx}.jpg'
                       cropped_filename = os.path.join(args.output, cropped_basename)
                       cv2.imwrite(cropped_filename, cropped_region)
                 except:
