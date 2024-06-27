@@ -2,6 +2,7 @@
 import argparse
 import glob
 import multiprocessing as mp
+import numpy as np
 import os
 import time
 import cv2
@@ -80,6 +81,29 @@ def get_parser():
     )
     return parser
 
+def process_image(img, boxes, output_img_path, output_mask_path):
+    # 确保 img 是 uint8 类型
+    img = img.astype(np.uint8)
+
+    # 创建全黑的 mask 图像
+    mask = np.zeros_like(img)
+
+    # 将 img 复制一份作为输出图像
+    output_img = img.copy()
+
+    # 获取 boxes 的坐标并填充相应区域为白色
+    for box in boxes.tensor:
+        x1, y1, x2, y2 = box.int().tolist()
+        
+        # 在输出图像中将 boxes 包含的区域变为白色
+        output_img[y1:y2, x1:x2] = 255
+        
+        # 在 mask 图像中将 boxes 包含的区域变为白色
+        mask[y1:y2, x1:x2] = 255
+
+    # 保存输出图像和 mask 图像
+    cv2.imwrite(output_img_path, output_img)
+    cv2.imwrite(output_mask_path, mask)
 
 if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)
@@ -126,9 +150,25 @@ if __name__ == "__main__":
 
                 try:
                     visualized_output.save(out_filename)
+                    print('image type', type(img))
 
                     # create cropped images
                     boxes = predictions["instances"].pred_boxes
+                    print(type(boxes))
+
+                    os.path.basename(path)
+                    prefix = os.path.splitext(os.path.basename(path))[0]
+                    incomplete_basename = f'{prefix}_incomplete.jpg'
+                    incomplete_filename = os.path.join(args.output, incomplete_basename)
+                    mask_basename = f'{prefix}_mask.jpg'
+                    mask_filename = os.path.join(args.output, mask_basename)
+                    print(incomplete_filename)
+                    print(mask_filename)
+                    try:
+                      process_image(img, boxes, incomplete_filename, mask_filename)
+                    except Exception as e:
+                      print(f'Exception due to {e}')
+
                     for idx, box in enumerate(boxes):
                       logger.info(f'{idx}, {box}')
                       box = box.tolist()
